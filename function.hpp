@@ -84,7 +84,26 @@ public:
 	/* 数値f(x)を返す */
 	T f(T x)
 	{
+		if(m_func.empty()){
+			throw "function is not defined.";
+		}
+
+		T temp = static_cast<T>(0), multbuf = static_cast<T>(1); 
+		for(auto it = m_func.begin(); it!=m_func.end(); ++it){
 		
+			multbuf *= *it->f(x);	
+			
+			if(*it->m_operation = Operatin::Plus){
+				temp += multbuf;
+				multbuf = static_cast<T>(1);
+			} else if (*it->m_operation = Operation::Multiply) {
+				continue;
+			} else if (*it->m_operation = Operation::None) {
+				temp += multbuf;		
+			}
+		}
+			
+		return temp;
 	}
 	/* 数値df/dx(x)を返す */
 	T df(T x)
@@ -124,6 +143,7 @@ public:
 	{
 		m_func.back().m_operation = Operation::Plus;
 		m_func.push_back(_constant<right>());
+		return *this;	
 	}
 	
 	// 減算代入
@@ -131,12 +151,14 @@ public:
 	{
 		m_func.back().m_operation = Operation::Plus;
 		right.m_sgn = !right.m_sgn;
-		m_func.push_back(right);	
+		m_func.push_back(right);
+		return *this;
 	}
 	inline Function<T>& operator-=(T right)
 	{
 		m_func.back().m_operation = Operation::Plus;
 		m_func.push_back(_constant<-right>());
+		return *this;
 	}
 	
 	// 乗算代入
@@ -144,44 +166,115 @@ public:
 	{
 		m_func.back().m_operation = Operation::Multiply;
 		m_func.push_back(right);
+		return *this;
 	}
 	inline Function<T>& operator*=(T right)
 	{
 		m_func.back().m_operation = Operation::Multiply;
 		m_func.push_back(_constant(right));
+		return *this;
 	}
 
 	// 除算代入
-	inline Function<T>& operator/=(Function<T> right){}
+	inline Function<T>& operator/=(Function<T> right)
+	{
+		m_func.back().m_operation = Operation::Multiply;
+		m_func.push_back(_inv(right));		
+		return *this;
+	}
+	inline Function<T>& operator/=(T right)
+	{
+		m_func.back().m_operation = Operation::Multiply;
+		m_func.push_back(_constant(static_cast<1> / right));
+		return *this;
+	}
+
+
 
 	// ----メンバ二項演算子
 	
 	// 加算	
-	inline Function<T> operator+(Function<T> right){}
+	inline Function<T> operator+(Function<T> right)
+	{
+		Function<T> temp = *this;
+		temp.m_func.back().m_operation = Operation::Plus;
+		temp.m_func.push_back(right);
+		return temp;
+	}
+	inline Function<T> operator+(T right)
+	{
+		Function<T> temp = *this;
+		temp.m_func.back().m_operation = Operation::Plus;
+		temp.m_func.push_back(_constant(right));
+		return temp;
+	}
 	
 	// 減算
-	inline Function<T> operator-(Function<T> right){}
-
+	inline Function<T> operator-(Function<T> right)
+	{
+		Function<T> temp = *this;
+		temp.m_func.back().m_operation = Operation::Plus;
+		right.m_sgn = !right.m_sgn;
+		temp.m_func.push_back(right);	
+		return temp;
+	}
+	inline Function<T> operator-(T right)
+	{
+		Function<T> temp = *this, const_right = _constant<right>();
+		temp.m_func.back().m_operation = Operation::Plus;
+		const_right.m_sgn = false;
+		temp.m_func.push_back(const_right);	
+		return temp;
+	}
+	
+	
 	// 乗算
-	inline Function<T> operator*(Function<T> right){}
+	inline Function<T> operator*(Function<T> right)
+	{
+		Function<T> temp = *this;
+		temp.m_func.back().m_operation = Operation::Multiply;
+		temp.m_func.push_back(right);
+		return temp;	
+	}
+	inline Function<T> operator*(T right)
+	{
+		Function<T> temp = *this;
+		temp.m_func.back().m_operation = Operation::Multiply;
+		temp.m_func.push_back(_constant<right>());
+		return temp;
+	}
+
 
 	// 除算
-	inline Function<T> operator/(Function<T> right){}
+	inline Function<T> operator/(Function<T> right)
+	{
+		Function<T> temp = *this;
+		temp.m_func.back().m_operation = Operation::Multiply;
+		temp.m_func.push_back(_inv(right));
+		return temp;
+	}
 
+	inline Function<T> operator/(T right)
+	{
+		Function<T> temp = *this;
+		temp.m_func.back().m_operation = Operation::Multiply;
+		temp.m_func.push_back(_inv(constant<right>()));
+		return temp;	
+	}
 
 
 	// ----フレンド二項演算子
 	// 加算	
-	inline friend Function<T> operator+(Function<T> left, Function<T> right){}
+	inline friend Function<T> operator+(T left, Function<T> right){}
 	
 	// 減算
-	inline friend Function<T> operator-(Function<T> left, Function<T> right){}
+	inline friend Function<T> operator-(T left, Function<T> right){}
 
 	// 乗算
-	inline friend Function<T> operator*(Function<T> left, Function<T> right){}
+	inline friend Function<T> operator*(T left, Function<T> right){}
 
 	// 除算
-	inline friend Function<T> operator/(Function<T> left, Function<T> right){}
+	inline friend Function<T> operator/(T left, Function<T> right){}
 
 public:
 
@@ -233,31 +326,31 @@ public:
 	}
 	
 	// f(x) = 1/x(dequeの最初の要素を引数に取る)	
-	static inline Function<T> _inv_x()
+	static inline Function<T> _inv()
 	{
-		static Function<T> obj_inv_x;
+		static Function<T> obj_inv;
 		static bool is_initialized = false;
 		if(!is_initialized){	
-			obj_inv_x.sgn = true;
-			obj_inv_x.operation = Operation::None;
-			obj_inv_x.m_is_elementary = true;
-			obj_inv_x.m_funcobj = [](T x) -> T
+			obj_inv.sgn = true;
+			obj_inv.operation = Operation::None;
+			obj_inv.m_is_elementary = true;
+			obj_inv.m_funcobj = [](T x) -> T
 			{
-				T temp = obj_inv_x.m_func.front().f(x);
-				return obj_inv_x.m_sgn
+				T temp = obj_inv.m_func.front().f(x);
+				return obj_inv.m_sgn
 					? static_cast<T>(1)/temp
 					: static_cast<T>(-1)/temp;	
 			};
-			obj_inv_x.m_dfuncobj = [](T x) -> T
+			obj_inv.m_dfuncobj = [](T x) -> T
 			{
-				T temp = obj_inv_x.m_func.front().f(x);
-				return obj_inv_x.m_sgn
-					? static_cast<T>(-1) / temp / temp * obj_inv_x.m_func.front().df(x)
-					: static_cast<T>(1) / temp / temp * obj_inv_x.m_func.front().df(x);
+				T temp = obj_inv.m_func.front().f(x);
+				return obj_inv.m_sgn
+					? static_cast<T>(-1) / temp / temp * obj_inv.m_func.front().df(x)
+					: static_cast<T>(1) / temp / temp * obj_inv.m_func.front().df(x);
 			};
 			is_initialized = true;
 		}
-		return obj_inv_x;	
+		return obj_inv;	
 	}
 	
 	// f(x) = pow(x) (dequeの始めのオブジェクトを引数, 二つ目を指数に取る)
@@ -524,24 +617,96 @@ public:
 	}
 
 		
+private:
 
+	// 標準数式関数(オペレータでのみ呼び出す)
+	static inline Function<T> inv(Function<T> x)
+	{
+		Function<T> temp = _inv();
+		temp.m_func.push_back(x);
+		temp.m_func.pushback(y);
+		return temp;
+	}
 
+	static inline Function<T> square(Function<T> x)
+	{
+		return Function<T>([](Function<T> x)->Function<T> {return x * x;});
+	}	
 
 public:
 
-	// 標準数式関数 
-	static inline Function<T> x(Function<T> _x){
-		return _x();	
+	// 標準数式関数(Function<T>型引数)
+	
+	// 累乗関数	
+	static inline Function<T> pow(Function<T> x, Function<T> y)
+	{
+		Function<T> temp = _pow();
+		temp.m_func.push_back(x);
+		temp.m_func.push_back(y);
+		return temp;
 	}
-	static inline Function<T> sin(Function<T> _x){}	
-	static inline Function<T> cos(Function<T> _x){}
-	static inline Function<T> tan(Function<T> _x){}
-	static inline Function<T> arcsin(Function<T> _x){}
-	static inline Function<T> arccos(Function<T> _x){}
-	static inline Function<T> arctan(Function<T> _x){}
-	static inline Function<T> sinh(Function<T> _x){}
-	static inline Function<T> cosh(Function<T> _x){}
-	static inline Function<T> exp(Function<T> _x){}
+	static inline Function<T> pow(Function<T> x, T y)
+	{
+		Function<T> temp = _pow();
+		temp.m_func.push_back(x);
+		temp.m_func.push_back(_constant<y>());	
+		return temp;
+	}
+
+	static inline Function<T> sin(Function<T> x)
+	{
+		Function<T> temp = _sin();
+		temp.m_func.push_back(x);
+		return temp;
+	}	
+	static inline Function<T> cos(Function<T> x)
+	{
+		Function<T> temp = _sin();
+		temp.m_func.push_back(x);
+		return temp;
+	}
+	static inline Function<T> tan(Function<T> x)
+	{
+		Function<T> temp = _tan();
+		temp.m_func.push_back(x);
+		return temp;
+	}
+	static inline Function<T> arcsin(Function<T> x)
+	{
+		Function<T> temp = _arcsin();
+		temp.m_func.push_back(x);
+		return temp;
+	}
+	static inline Function<T> arccos(Function<T> x)
+	{
+		Function<T> temp = _arccos();
+		temp.m_func.push_back(x);
+		return temp;
+	}
+	static inline Function<T> arctan(Function<T> x)
+	{
+		Function<T> temp = _arctan();
+		temp.m_func.push_back(x);
+		return temp;
+	}
+	static inline Function<T> sinh(Function<T> x)
+	{
+		Function<T> temp = _sinh();
+		temp.m_func.push_back(x);
+		return temp;
+	}
+	static inline Function<T> cosh(Function<T> x)
+	{
+		Function<T> temp = _cosh();
+		temp.m_func.push_back(x);
+		return temp;
+	}
+	static inline Function<T> exp(Function<T> x)
+	{
+		Function<T> temp = _exp();
+		temp.m_func.push_back(x);
+		return temp;
+	}
 
 
 
