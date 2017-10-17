@@ -9,9 +9,9 @@ template<typename T>
 class Function{
 private:
 	enum Operation{
+		None,
 		Plus,
 		Multiply,
-		None
 	};
 
 public:
@@ -32,8 +32,6 @@ private:
 	
 	// 関数f(x)
 	std::deque<Function*> _func;
-	// 関数f(x)の1階微分 df/dx(x)
-	std::deque<Function> _dfunc;
 
 
 public:
@@ -117,25 +115,29 @@ public:
 	inline Function<T> operator/(Function<T> left, Function<T> right);
 
 
-
-
-
-
-
+private:
+	static inline Function<T> sin(Function<T> _x);	
+	static inline Function<T> cos(Function<T> _x);
+	static inline Function<T> tan(Function<T> _x);
+	static inline Function<T> arcsin(Function<T> _x);
+	static inline Function<T> arccos(Function<T> _x);
+	static inline Function<T> arctan(Function<T> _x);
+	static inline Function<T> sinh(Function<T> _x);
+	static inline Function<T> cosh(Function<T> _x);
+	static inline Function<T> exp(Function<T> _x);
 
 public:
 
 	// 数式関数 
-	static Function<T> x(Function<T> _x);
-	static Function<T> sin(Function<T> _x);	
-	static Function<T> cos(Function<T> _x);
-	static Function<T> tan(Function<T> _x);
-	static Function<T> arcsin(Function<T> _x);
-	static Function<T> arccos(Function<T> _x);
-	static Function<T> arctan(Function<T> _x);
-	static Function<T> sinh(Function<T> _x);
-	static Function<T> cosh(Function<T> _x);
-	static Function<T> exp(Function<T> _x);
+	static inline Function<T> sin(Function<T> _x);	
+	static inline Function<T> cos(Function<T> _x);
+	static inline Function<T> tan(Function<T> _x);
+	static inline Function<T> arcsin(Function<T> _x);
+	static inline Function<T> arccos(Function<T> _x);
+	static inline Function<T> arctan(Function<T> _x);
+	static inline Function<T> sinh(Function<T> _x);
+	static inline Function<T> cosh(Function<T> _x);
+	static inline Function<T> exp(Function<T> _x);
 
 
 
